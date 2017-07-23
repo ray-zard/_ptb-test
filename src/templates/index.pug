@@ -1,0 +1,12 @@
+extends layouts/_default
+
+block content
+	include partials/_navigation
+	h1 Привет!
+
+	block footer
+		h2 Привет 2!
+		ul
+			li= data.dirname
+			li Пок а
+			li И еще раз привет!

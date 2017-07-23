@@ -1,12 +1,12 @@
 'use strict';
 
-import plugins  from 'gulp-load-plugins';
-import yargs    from 'yargs';
-import browser  from 'browser-sync';
-import gulp     from 'gulp';
-import rimraf		from 'rimraf';
-import yaml			from 'js-yaml';
-import fs       from 'fs';
+import plugins        from 'gulp-load-plugins';
+import yargs          from 'yargs';
+import browser        from 'browser-sync';
+import gulp           from 'gulp';
+import rimraf		      from 'rimraf';
+import yaml			      from 'js-yaml';
+import fs             from 'fs';
 
 // Load all Gulp plugins into one variable
 const $ = plugins();
@@ -46,7 +46,11 @@ function copy() {
 
 // Copy page templates into finished pug files
 function pages() {
-  return gulp.src('src/pages/**/*.pug')
+  return gulp.src(UNCSS_OPTIONS.html)
+    // .pipe($.data(UNCSS_OPTIONS.data))
+    .pipe($.data(() => {
+        return JSON.parse(fs.readFileSync('src/templates/data/data.json'))
+    }))
     .pipe($.pug({
       pretty: true
     }))
@@ -54,11 +58,11 @@ function pages() {
 }
 
 
-// // Load updated HTML templates and partials into Panini
-// function resetPages(done) {
-//   panini.refresh();
-//   done();
-// }
+// Load updated HTML templates and partials into Panini
+function resetPages(done) {
+  $.pug.refresh();
+  done();
+}
 
 // // Generate a style guide from the Markdown content and HTML template in styleguide/
 // function styleGuide(done) {
@@ -128,10 +132,15 @@ function reload(done) {
 
 // Watch for changes to static assets, pages, Sass, and JavaScript
 function watch() {
+
   gulp.watch(PATHS.assets, copy);
-  gulp.watch('src/pages/**/*.pug').on('all', gulp.series(pages, browser.reload));
+
+  gulp.watch('src/templates/**/*.pug').on('all', gulp.series(pages, browser.reload));
+  gulp.watch('src/{layouts,partials}/**/*.pug').on('all', gulp.series(resetPages, pages, browser.reload));
+
   gulp.watch('src/assets/sass/**/*.{scss,sass}').on('all', sass);
   gulp.watch('src/assets/js/**/*.js').on('all', gulp.series(javascript, browser.reload));
   gulp.watch('src/assets/img/**/*').on('all', gulp.series(images, browser.reload));
   // gulp.watch('src/styleguide/**').on('all', gulp.series(styleGuide, browser.reload));
+  
 }
